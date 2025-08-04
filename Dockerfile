@@ -22,7 +22,7 @@ RUN pip install -r requirements.txt
 COPY . /app
 
 # Expose port
-EXPOSE 10000
+EXPOSE 5000
 
 # Start server
-CMD ["python", "main.py"]
+CMD ["python", "server.py"]
