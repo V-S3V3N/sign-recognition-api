@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 import os
 import uuid
-from inference_pipeline import predict_sign
+from inference_pipeline import segment_and_predict_signs
+from utils.sentence_generator import llm_generate_sentence
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -23,10 +24,30 @@ def predict():
     video_file.save(video_path)
 
     try:
-        result = predict_sign(video_path)
-        return jsonify({"prediction": result})
+        # when video coming in we segment them first, then only send to predict sign
+        results = segment_and_predict_signs(video_path)
+        if not results:
+            return {
+                "predictions": [],
+                "sentence": "",
+                "success": True
+            }
+        valid_results = [p for p in results if len(p) >= 4]
+        words_only = [r[2] for r in valid_results]
+        sentence = llm_generate_sentence(words_only)
+        return {
+            "predictions": [
+                {"start": p[0], "end": p[1], "label": p[2], "confidence": p[3]}
+                for p in valid_results
+            ],
+            "sentence": sentence,
+            "success": True
+        }
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        print("❌ Error in /predict:", e)
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
     finally:
         os.remove(video_path)
 

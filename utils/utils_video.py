@@ -2,12 +2,15 @@ import cv2
 import numpy as np
 import torch
 from torchvision import transforms
+from PIL import Image
 
 FRAMES = 16
+IMAGE_SIZE = 112
 transform = transforms.Compose([
-    transforms.ToPILImage(),
-    transforms.Resize((112, 112)),
     transforms.ToTensor(),
+    transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+    transforms.Normalize([0.43216, 0.394666, 0.37645],
+                         [0.22803, 0.22145, 0.216989])
 ])
 
 def extract_frames(path, num_frames=FRAMES):
