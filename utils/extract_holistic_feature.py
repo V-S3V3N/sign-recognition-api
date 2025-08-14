@@ -59,10 +59,8 @@ def extract_holistic_features(video_path, num_frames=16):
     hands.close()
 
     if len(landmarks) == 0:
-        return np.zeros(675, dtype=np.float32)
+        return torch.zeros(675)
 
-    landmarks = torch.tensor(landmarks, dtype=torch.float32)  # shape: [num_frames, 675]
-    feature = torch.mean(landmarks, dim=0)  # shape: [675]
-    return feature.numpy()  # ✅ always return numpy array
-
+    landmarks = torch.tensor(landmarks, dtype=torch.float32)
+    return torch.mean(landmarks, dim=0)
 

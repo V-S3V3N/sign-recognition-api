@@ -10,15 +10,10 @@ from pathlib import Path
 
 FRAMES = 16
 IMAGE_SIZE = 112
-# transform = transforms.Compose([
-#     transforms.ToTensor(),
-#     transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
-#     transforms.Normalize([0.43216, 0.394666, 0.37645],
-#                          [0.22803, 0.22145, 0.216989])
-# ])
 transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Resize((112, 112))
+    transforms.ToPILImage(),
+    transforms.Resize((112, 112)),
+    transforms.ToTensor()
 ])
 
 def extract_frames(path, num_frames=FRAMES):

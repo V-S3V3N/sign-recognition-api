@@ -7,16 +7,15 @@ import tempfile
 import os
 from typing import List, Tuple, Any
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
-from models.cnn_model import MY3DCNN
-from models.fusion_mlp import FusionMLP
+from models.msl_cnn_model import MY3DCNN
+from models.msl_fusion_mlp import FusionMLP
 from utils.utils_video import extract_frames
 from utils.extract_holistic_feature import extract_holistic_features
-import mediapipe as mp
 
-LABELS_PATH = "labels_map.json"
-MLP_PATH = "fusion_mlp.pth"
-CNN_PATH = "trained_3dcnn.pth"
-SCALER_PATH = "feature_scaler.pkl"
+LABELS_PATH = "msl_labels_map.json"
+MLP_PATH = "msl_fusion_mlp.pth"
+CNN_PATH = "msl_3dcnn.pth"
+SCALER_PATH = "msl_feature_scaler.pkl"
 NUM_FRAMES = 16
 
 def extract_cnn_feature(video_path):
@@ -24,7 +23,7 @@ def extract_cnn_feature(video_path):
     frames_tensor = extract_frames(video_path, NUM_FRAMES)
     frames_tensor = frames_tensor.unsqueeze(0)
 
-    model = MY3DCNN(num_classes=2185)
+    model = MY3DCNN(num_classes=44)
     model.load_state_dict(torch.load(CNN_PATH, map_location="cpu"))
     model.eval()
 
@@ -51,7 +50,7 @@ def predict_segment(video_path):
     scaler = joblib.load(SCALER_PATH)
     model = FusionMLP(input_dim=combined.shape[1])
     model.load_state_dict(torch.load(MLP_PATH))
-    model.eval() #this tells the model this is running not training
+    model.eval()
 
     scaled = scaler.transform(combined.numpy())
     input_tensor = torch.tensor(scaled, dtype=torch.float32)
@@ -125,6 +124,7 @@ def extract_hand_landmarks(results) -> np.ndarray:
 # Too big: signs might be missed
 def detect_motion_segments(video_path: str, threshold=0.01, window_size=5, min_segment_len=5) -> tuple[
     list[Any], float]:
+    import mediapipe as mp
     mp_holistic = mp.solutions.holistic
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -181,7 +181,7 @@ def detect_motion_segments(video_path: str, threshold=0.01, window_size=5, min_s
     print(f"[DEBUG] Detected motion segments: {segments}")
     return segments, fps
 
-def segment_and_predict_signs(video_path: str) -> List[Tuple[int, int, str]]:
+def msl_segment_and_predict_signs(video_path: str) -> List[Tuple[int, int, str]]:
     print(f"[INFO] Detecting segments in: {video_path}")
     segments, fps = detect_motion_segments(video_path)
     predictions = []
